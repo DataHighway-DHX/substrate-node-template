@@ -20,9 +20,9 @@ git = 'https://github.com/paritytech/substrate.git'
 tag = 'monthly-2021-08'
 version = '3.0.0'
 
-[dependencies.node-template-runtime]
+[dependencies.datahighway-runtime]
 path = '../runtime'
-version = '3.0.0-monthly-2021-08'
+version = '3.0.6'
 
 [dependencies]
 jsonrpc-core = '15.1.0'
@@ -145,4 +145,4 @@ rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467'
 
 [features]
 default = []
-runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']
+runtime-benchmarks = ['datahighway-runtime/runtime-benchmarks']
