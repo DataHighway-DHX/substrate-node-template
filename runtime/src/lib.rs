@@ -56,11 +56,22 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 /// Balance of an account.
 pub type Balance = u128;
 
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+/// never know...
+pub type AccountIndex = u32;
+
 /// Index of a transaction in the chain.
 pub type Index = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
+
+pub type Moment = u64;
+
+// TODO - move into pallet/primitives
+pub const MILLICENTS: Balance = 1_000_000_000;
+pub const CENTS: Balance = 1_000 * MILLICENTS; // assume this is worth about a cent.
+pub const DOLLARS: Balance = 100 * CENTS;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -154,7 +165,7 @@ impl frame_system::Config for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = AccountIdLookup<AccountId, AccountIndex>;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -219,7 +230,7 @@ impl pallet_grandpa::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+	pub const MinimumPeriod: Moment = SLOT_DURATION / 2;
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -231,7 +242,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
+	pub const ExistentialDeposit: u128 = 1 * DOLLARS;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -250,7 +261,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 1;
+	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -281,7 +292,7 @@ construct_runtime!(
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Aura: pallet_aura::{Pallet, Config<T>},
-		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
@@ -291,7 +302,7 @@ construct_runtime!(
 );
 
 /// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+pub type Address = sp_runtime::MultiAddress<AccountId, AccountIndex>;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -308,6 +319,10 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+/// The payload being signed in transactions.
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+/// Extrinsic type that has already been checked.
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -402,6 +417,10 @@ impl_runtime_apis! {
 			Grandpa::grandpa_authorities()
 		}
 
+		// fn current_set_id() -> fg_primitives::SetId {
+		// 	Grandpa::current_set_id()
+		// }
+
 		fn submit_report_equivocation_unsigned_extrinsic(
 			_equivocation_proof: fg_primitives::EquivocationProof<
 				<Block as BlockT>::Hash,
@@ -409,6 +428,12 @@ impl_runtime_apis! {
 			>,
 			_key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
 		) -> Option<()> {
+			// let key_owner_proof = key_owner_proof.decode()?;
+
+			// Grandpa::submit_unsigned_equivocation_report(
+			//     equivocation_proof,
+			//     key_owner_proof,
+			// )
 			None
 		}
 
@@ -416,6 +441,12 @@ impl_runtime_apis! {
 			_set_id: fg_primitives::SetId,
 			_authority_id: GrandpaId,
 		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+			// use codec::Encode;
+
+			// Historical::prove((fg_primitives::KEY_TYPE, authority_id))
+			//     .map(|p| p.encode())
+			//     .map(fg_primitives::OpaqueKeyOwnershipProof::new)
+
 			// NOTE: this is the only implementation possible since we've
 			// defined our key owner proof type as a bottom type (i.e. a type
 			// with no values).
