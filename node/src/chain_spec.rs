@@ -1,6 +1,16 @@
-use datahighway_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
+use node_template_runtime::{
+	AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SudoConfig,
 	SystemConfig, WASM_BINARY,
+};
+use module_primitives::{
+    constants::currency::{
+        DOLLARS,
+    },
+	types::{
+        AccountId,
+        Balance,
+        Signature,
+    },
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;

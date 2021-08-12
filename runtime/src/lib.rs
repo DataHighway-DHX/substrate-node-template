@@ -36,6 +36,15 @@ pub use frame_support::{
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
+
+use module_primitives::{
+	types::{
+        AccountIndex,
+        Index,
+        Moment,
+    },
+};
+
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
@@ -56,17 +65,8 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 /// Balance of an account.
 pub type Balance = u128;
 
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
-
-pub type Moment = u64;
 
 // TODO - move into pallet/primitives
 pub const MILLICENTS: Balance = 1_000_000_000;

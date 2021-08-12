@@ -20,7 +20,9 @@ jsonrpc-core = '15.1.0'
 structopt = '0.3.8'
 
 # local node-specific dependencies
-datahighway-runtime = { version = '3.0.6', path = '../runtime' }
+node-template-runtime = { version = '3.0.6', path = '../runtime' }
+
+module-primitives = { version = '3.0.6', default-features = false, path = '../pallets/primitives' }
 
 # Substrate dependencies
 frame-benchmarking = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467' }
@@ -54,4 +56,4 @@ substrate-frame-rpc-system = { git = 'https://github.com/paritytech/substrate', 
 
 [features]
 default = []
-runtime-benchmarks = ['datahighway-runtime/runtime-benchmarks']
+runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']
