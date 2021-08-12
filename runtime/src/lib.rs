@@ -2,41 +2,73 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
+use codec::{
+    Decode,
+    Encode,
+};
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	create_runtime_str, curve::PiecewiseLinear, generic, impl_opaque_keys,
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, IdentityLookup, IdentifyAccount, NumberFor, OpaqueKeys, Saturating, StaticLookup, SaturatedConversion, Verify},
+	transaction_validity::{TransactionPriority, TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, MultiSignature, FixedPointNumber, Percent, Perquintill,
 };
+pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{KeyOwnerProofSystem, Randomness, StorageInfo},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		IdentityFee, Weight,
+	traits::{
+		Currency,
+		Imbalance,
+		Contains,
+		ContainsLengthBound,
+		OnUnbalanced,
+		KeyOwnerProofSystem,
+		LockIdentifier,
+		Randomness,
+		StorageInfo,
+		U128CurrencyToVote,
 	},
+	weights::{
+		constants::{
+			BlockExecutionWeight,
+			ExtrinsicBaseWeight,
+			RocksDbWeight,
+			WEIGHT_PER_SECOND,
+		},
+		DispatchClass,
+		IdentityFee,
+		Weight,
+	},
+	PalletId,
 	StorageValue,
 };
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
-
+use frame_system::{
+	// limits::{
+	// 	BlockLength,
+	// 	BlockWeights,
+	// },
+	EnsureOneOf,
+	EnsureRoot,
+};
+pub use pallet_transaction_payment::{
+    CurrencyAdapter,
+    Multiplier,
+    TargetedFeeAdjustment,
+};
+use pallet_transaction_payment::{
+    FeeDetails,
+    RuntimeDispatchInfo,
+};
 use module_primitives::{
 	types::{
         AccountIndex,
@@ -47,7 +79,11 @@ use module_primitives::{
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+#[cfg(any(feature = "std", test))]
+pub use pallet_balances::Call as BalancesCall;
+#[cfg(any(feature = "std", test))]
+pub use frame_system::Call as SystemCall;
+// pub use pallet_timestamp::Call as TimestampCall;
 
 /// Import the template pallet.
 pub use pallet_template;
@@ -63,14 +99,14 @@ pub mod opaque {
 		Hash,
 	};
 
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
+
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -99,6 +135,20 @@ pub use module_primitives::{
 	},
 	types::*,
 };
+use sp_runtime::generic::Era;
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+/// Wasm binary unwrapped. If built with `SKIP_WASM_BUILD`, the function panics.
+#[cfg(feature = "std")]
+pub fn wasm_binary_unwrap() -> &'static [u8] {
+    WASM_BINARY.expect(
+        "Development wasm binary is not available. This means the client is built with `SKIP_WASM_BUILD` flag and it \
+         is only usable for production chains. Please rebuild with the flag disabled.",
+    )
+}
 
 // To learn more about runtime versioning and what each of the following value means:
 //   https://substrate.dev/docs/en/knowledgebase/runtime/upgrades#runtime-versioning
@@ -228,7 +278,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 1 * DOLLARS;
+	pub const ExistentialDeposit: Balance = 1 * DOLLARS;
 	pub const MaxLocks: u32 = 50;
 }
 

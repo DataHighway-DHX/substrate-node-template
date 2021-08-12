@@ -5,19 +5,21 @@ edition = '2018'
 name = 'node-template'
 version = '3.0.6'
 
-[package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
-
 [[bin]]
 name = 'node-template'
 
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
 [build-dependencies]
 substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467' }
+vergen = '3.0.4'
 
 [dependencies]
 # third-party dependencies
 jsonrpc-core = '15.1.0'
 structopt = '0.3.8'
+hex-literal = { version = '0.3.1', optional = false }
 
 # local node-specific dependencies
 node-template-runtime = { version = '3.0.6', path = '../runtime' }
@@ -53,6 +55,9 @@ sp-runtime = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8
 sp-timestamp = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467' }
 sc-telemetry = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467' }
 substrate-frame-rpc-system = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467' }
+
+serde_json = '1.0.41'
+serde = { version = '1.0.126', features = ['derive'] }
 
 [features]
 default = []

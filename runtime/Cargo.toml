@@ -13,10 +13,11 @@ path = '../pallets/template'
 version = '3.0.0-monthly-2021-08'
 
 [build-dependencies]
-substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467', package = 'substrate-wasm-builder' }
+# substrate-wasm-builder = { git = 'https://github.com/paritytech/substrate', rev = '4d28ebeb8b027ca0227fe7779c5beb70a7b56467', package = 'substrate-wasm-builder' }
+substrate-wasm-builder = { version = '4.0.0', package = 'substrate-wasm-builder' }
 
 [dependencies]
-codec = { version = '2.0.0', package = 'parity-scale-codec', default-features = false, features = ['derive'] }
+codec = { version = '2.2.0', package = 'parity-scale-codec', default-features = false, features = ['derive', 'max-encoded-len'] }
 hex-literal = { version = '0.3.1', optional = true }
 
 # primitives
