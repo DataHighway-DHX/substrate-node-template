@@ -1,12 +1,13 @@
 use node_template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	SystemConfig, TemplateModuleConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use serde_json::map::Map;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -39,6 +40,10 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
+    let mut properties = Map::new();
+    properties.insert("tokenSymbol".into(), "UNIT".into());
+    properties.insert("tokenDecimals".into(), 18.into());
+
 	Ok(ChainSpec::from_genesis(
 		// Name
 		"Development",
@@ -69,7 +74,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		Some(properties),
 		// Extensions
 		None,
 	))
@@ -150,5 +155,9 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		},
+		template_module: TemplateModuleConfig {
+			rewards_allowance_dhx_current: 5_000_000_000_000_000_000_000u128,
+			rewards_allowance_dhx_for_date: Default::default(),
+		}
 	}
 }

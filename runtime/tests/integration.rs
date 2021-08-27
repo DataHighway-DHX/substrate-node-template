@@ -181,15 +181,15 @@ mod tests {
 
 			assert_ok!(TemplateModule::set_rewards_allowance_dhx_current(
 				Origin::signed(0),
-				5000
+				5_000_000_000_000_000_000_000
 			));
 
 			// Verify Storage
-			assert_eq!(TemplateModule::rewards_allowance_dhx_current(), 5000);
+			assert_eq!(TemplateModule::rewards_allowance_dhx_current(), 5_000_000_000_000_000_000_000);
 
 			assert_ok!(TemplateModule::set_rewards_allowance_dhx_for_date(
 				Origin::signed(0),
-				5000
+				5_000_000_000_000_000_000_000
 			));
 		});
 	}

@@ -79,8 +79,8 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				rewards_allowance_dhx_for_date: Default::default(),
-				// FIXME - this doesn't get stored at genesis for some reason
-				rewards_allowance_dhx_current: 5000u128,
+				// 5000 UNIT, where UNIT token has 18 decimal places
+				rewards_allowance_dhx_current: 5_000_000_000_000_000_000_000u128,
 			}
 		}
 	}
