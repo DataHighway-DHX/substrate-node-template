@@ -126,6 +126,23 @@ pub mod pallet {
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			// Anything that needs to be done at the start of the block.
 
+			// In the genesis config we set the default value of StorageValue `RewardsAllowanceDHXCurrent`
+			// to 5000 UNIT tokens, which would represent the total rewards to be distributed
+			// in a year. Governance may choose to change that during the year or in subsequent years.
+			//
+			// At the start of each block after genesis, we check the current timestamp
+			// (e.g. 27th August 2021 @ ~7am is 1630049371000), where milliseconds/day is 86400000,
+			// and then determine the timestamp at the start of that day (e.g. 27th August 2021 @ 12am
+			// is 1630022400000, since we want the timestamp of the start of the day to represent that
+			// day, as we will store the rewards in UNIT tokens that are available for that day
+			// as a value under that key using the `RewardsAllowanceDHXForDate` StorageMap if it does
+			// not already exist (e.g. if it was not yet generated automatically in any blocks earlier
+			// on that day, and not yet added manually by a user calling the `set_rewards_allowance_dhx_for_date`
+			// extrinsic dispatchable function).
+			//
+			// Remaining rewards available for a given day that are stored under a key that is the
+			// timestamp of that day may be modified by calling `reduce_remaining_rewards_allowance_dhx_for_date`.
+
 			// Check if current date is in storage, otherwise add it.
 			let current_date = <pallet_timestamp::Pallet<T>>::get();
 
@@ -220,18 +237,18 @@ pub mod pallet {
 		// customised by governance at any time. this function allows us to change it each year
   		// https://docs.google.com/spreadsheets/d/1W2AzOH9Cs9oCR8UYfYCbpmd9X7hp-USbYXL7AuwMY_Q/edit#gid=970997021
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn set_rewards_allowance_dhx_for_date(origin: OriginFor<T>, rewards_allowance: BalanceOf<T>) -> DispatchResult {
+		pub fn set_rewards_allowance_dhx_for_date(origin: OriginFor<T>, rewards_allowance: BalanceOf<T>, timestamp: u64) -> DispatchResult {
 			let _who = ensure_signed(origin)?;
 
-			let current_date = <pallet_timestamp::Pallet<T>>::get();
+			// Note: we do not need the following as we're not using the current timestamp, rather the function parameter.
+			// let current_date = <pallet_timestamp::Pallet<T>>::get();
+			// let requested_date_as_u64 = Self::convert_moment_to_u64_in_milliseconds(timestamp.clone())?;
+			// log::info!("requested_date_as_u64: {:?}", requested_date_as_u64.clone());
 
-			// convert the requested date/time to the start of the current day date/time.
+			// Note: to get current timestamp `<pallet_timestamp::Pallet<T>>::get()`
+			// convert the requested date/time to the start of that day date/time to signify that date for lookup
 			// i.e. 21 Apr @ 1420 -> 21 Apr @ 0000
-
-			let requested_date_as_u64 = Self::convert_moment_to_u64_in_milliseconds(current_date.clone())?;
-			log::info!("requested_date_as_u64: {:?}", requested_date_as_u64.clone());
-
-			let requested_date_millis = Self::convert_u64_in_milliseconds_to_start_of_date(requested_date_as_u64.clone())?;
+			let requested_date_millis = Self::convert_u64_in_milliseconds_to_start_of_date(timestamp.clone())?;
 
 			// Update storage. Override the default that may have been set in on_initialize
 			<RewardsAllowanceDHXForDate<T>>::insert(requested_date_millis.clone(), &rewards_allowance);
@@ -245,15 +262,13 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn reduce_remaining_rewards_allowance_dhx_for_date(origin: OriginFor<T>, daily_rewards: BalanceOf<T>) -> DispatchResult {
+		// TODO - change from `reduce_` to `change_`, and provide another parameter `change: u8`, whose value
+		// maybe 0 or 1 to represent that we want to make a corresponding decrease or increase to the remaining
+		// dhx rewards allowance for a given date.
+		pub fn reduce_remaining_rewards_allowance_dhx_for_date(origin: OriginFor<T>, daily_rewards: BalanceOf<T>, timestamp: u64) -> DispatchResult {
 			let _who = ensure_signed(origin)?;
 
-			let current_date = <pallet_timestamp::Pallet<T>>::get();
-
-			let requested_date_as_u64 = Self::convert_moment_to_u64_in_milliseconds(current_date.clone())?;
-			log::info!("requested_date_as_u64: {:?}", requested_date_as_u64.clone());
-
-			let requested_date_millis = Self::convert_u64_in_milliseconds_to_start_of_date(requested_date_as_u64.clone())?;
+			let requested_date_millis = Self::convert_u64_in_milliseconds_to_start_of_date(timestamp.clone())?;
 
 			// https://substrate.dev/rustdocs/latest/frame_support/storage/trait.StorageMap.html
 			ensure!(<RewardsAllowanceDHXForDate<T>>::contains_key(&requested_date_millis), DispatchError::Other("Date key must exist to reduce allowance."));
