@@ -3650,6 +3650,8 @@ dependencies = [
  "sc-telemetry",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -3669,6 +3671,7 @@ dependencies = [
 name = "node-template-runtime"
 version = "3.0.0-monthly-2021-08"
 dependencies = [
+ "chrono",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -3691,6 +3694,7 @@ dependencies = [
  "sp-consensus-aura",
  "sp-core",
  "sp-inherents",
+ "sp-io",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -3968,14 +3972,19 @@ dependencies = [
 name = "pallet-template"
 version = "3.0.0-monthly-2021-08"
 dependencies = [
+ "chrono",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
